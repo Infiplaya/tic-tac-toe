@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 export default function Game() {
   const [history, setHistory] = useState<Array<Array<String>>>([Array(9).fill(null)]);
+  const [gameMode, setGameMode] = useState<'computer' | 'player-player' | 'menu'>('menu')
   const [currentMove, setCurrentMove] = useState(0);
   const [isAsc, setIsAsc] = useState(true);
   const [selectedSign, setSelectedSign] = useState('')
@@ -37,9 +38,11 @@ export default function Game() {
     }
   }
 
-  function handleStartGame(sign: string) {
-    setSelectedSign(sign);
-    if (sign === 'X') {
+  function handleStartGame() {
+    if (!selectedSign || gameMode === 'menu') {
+      return;
+    }
+    if (selectedSign === 'X') {
       setPlayerTurn(true)
     } else {
       setPlayerTurn(false);
@@ -48,7 +51,7 @@ export default function Game() {
   }
 
   function handleChangeTurn() {
-    setPlayerTurn(prev => !prev);
+    setPlayerTurn(!playerTurn);
   }
 
   let moves = history.map((squares, move) => {
@@ -70,15 +73,30 @@ export default function Game() {
   });
 
   return (
-    <div className="game">
-      <div className="game-board">
-        {!isGameStarted ? <>Select <button onClick={() => handleStartGame('X')}>X</button> or <button onClick={() => handleStartGame('O')}>O</button> </>: null}
-        You selected: {selectedSign}
-        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} selectedSign={selectedSign} turn={playerTurn} onChangeTurn={handleChangeTurn} />
-      </div>
-      <div className="game-info">
-        <ul>{isAsc ? moves : newMoves}</ul>
-        <button onClick={handleSort}>Sort</button>
+    <div>
+  
+          <div className="game">
+          {!isGameStarted ? <div className="game-menu">
+            <div className="select-sign">
+              <button onClick={() => setSelectedSign('X')}>Select X</button> 
+              <button onClick={() => setSelectedSign('O')}>Select O</button>
+              You selected: {selectedSign}
+            </div>
+            <div className="select-mode">
+              <button onClick={() => setGameMode('computer')}>Computer</button> 
+              <button onClick={() => setGameMode('player-player')}>Player vs Player</button>
+            </div>
+            <button onClick={handleStartGame}>Start Game</button>
+          </div> : 
+            <>
+              <div className="game-board">
+                <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} selectedSign={selectedSign} turn={playerTurn} onChangeTurn={handleChangeTurn} />
+              </div>
+              <div className="game-info">
+                <ul>{isAsc ? moves : newMoves}</ul>
+                <button onClick={handleSort}>Sort</button>
+              </div>
+            </>}
       </div>
     </div>
   );
@@ -109,22 +127,19 @@ function Board({ xIsNext, squares, onPlay, selectedSign, turn, onChangeTurn }: B
   }
 
   function handleClick(index: number) {
-    if (squares[index] || calculateWinner(squares) || !selectedSign) {
+    if (squares[index] || calculateWinner(squares)) {
       return;
     }
     const nextSquares = squares.slice();
-
-    if (xIsNext) {
-      if (selectedSign === 'X') {
+      
+    if (selectedSign === 'X') {
         nextSquares[index] = "X";
-      } else {
-        return
       }
-    } else {
+     else {
       nextSquares[index] = "O";
     }
-    onChangeTurn();
     onPlay(nextSquares);
+    onChangeTurn();
   }
 
   useEffect(() => {
@@ -132,8 +147,6 @@ function Board({ xIsNext, squares, onPlay, selectedSign, turn, onChangeTurn }: B
       setTimeout(() => {
         makeComputerMove(Math.floor(Math.random() * 9));
       }, 1000)
-    } else {
-      return
     }
   }, [turn])
 
@@ -152,9 +165,8 @@ function Board({ xIsNext, squares, onPlay, selectedSign, turn, onChangeTurn }: B
         nextSquares[index] = "X";
       }
     
-
-    onChangeTurn();
     onPlay(nextSquares);
+    onChangeTurn();
   }
 
   let board = [];

@@ -71,6 +71,18 @@ button:disabled, button[disabled] {
 }
 
 
+.select-sign {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.select-mode {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
 .square {
   border: 2px #535bf2 solid;
   float: left;
@@ -108,6 +120,13 @@ button:disabled, button[disabled] {
   place-items: center;
   justify-content: center;
 }
+
+.game-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 
 li {
   margin-top: 10px;
