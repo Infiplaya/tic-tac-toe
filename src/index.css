@@ -53,6 +53,10 @@ button:focus-visible {
   outline: #535bf2 2px;
 }
 
+button:disabled, button[disabled] {
+  opacity: 1;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

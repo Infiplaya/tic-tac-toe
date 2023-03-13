@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Game() {
   const [history, setHistory] = useState<Array<Array<String>>>([Array(9).fill(null)]);
@@ -7,6 +7,8 @@ export default function Game() {
   const [selectedSign, setSelectedSign] = useState('')
   const [newMoves, setNewMoves] = useState<JSX.Element[]>();
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [playerTurn, setPlayerTurn] = useState<Boolean | undefined>(undefined)
+  
   const xIsNext = currentMove % 2 === 0;
   const currentSquares = history[currentMove];
 
@@ -35,6 +37,20 @@ export default function Game() {
     }
   }
 
+  function handleStartGame(sign: string) {
+    setSelectedSign(sign);
+    if (sign === 'X') {
+      setPlayerTurn(true)
+    } else {
+      setPlayerTurn(false);
+    }
+    setIsGameStarted(true);
+  }
+
+  function handleChangeTurn() {
+    setPlayerTurn(prev => !prev);
+  }
+
   let moves = history.map((squares, move) => {
     let description;
     if (move > 0) {
@@ -53,17 +69,12 @@ export default function Game() {
     );
   });
 
-  function handleStartGame(sign: string) {
-    setSelectedSign(sign);
-    setIsGameStarted(true);
-  }
-
   return (
     <div className="game">
       <div className="game-board">
         {!isGameStarted ? <>Select <button onClick={() => handleStartGame('X')}>X</button> or <button onClick={() => handleStartGame('O')}>O</button> </>: null}
         You selected: {selectedSign}
-        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} selectedSign={selectedSign} />
+        <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} selectedSign={selectedSign} turn={playerTurn} onChangeTurn={handleChangeTurn} />
       </div>
       <div className="game-info">
         <ul>{isAsc ? moves : newMoves}</ul>
@@ -78,13 +89,13 @@ interface BoardProps {
     squares: String[]; 
     onPlay: (nextSquares: String[]) => void;
     selectedSign: string;
+    turn: Boolean | undefined;
+    onChangeTurn: () => void;
   }
 
-function Board({ xIsNext, squares, onPlay, selectedSign }: BoardProps) {
+function Board({ xIsNext, squares, onPlay, selectedSign, turn, onChangeTurn }: BoardProps) {
   const winner = calculateWinner(squares);
-  console.log(selectedSign)
-
-  let status;
+  let status: string;
 
   if (winner) {
     status = "Winner: " + winner[1];
@@ -102,11 +113,47 @@ function Board({ xIsNext, squares, onPlay, selectedSign }: BoardProps) {
       return;
     }
     const nextSquares = squares.slice();
+
     if (xIsNext) {
-      nextSquares[index] = "X";
+      if (selectedSign === 'X') {
+        nextSquares[index] = "X";
+      } else {
+        return
+      }
     } else {
       nextSquares[index] = "O";
     }
+    onChangeTurn();
+    onPlay(nextSquares);
+  }
+
+  useEffect(() => {
+    if (turn === false) {
+      setTimeout(() => {
+        makeComputerMove(Math.floor(Math.random() * 9));
+      }, 1000)
+    } else {
+      return
+    }
+  }, [turn])
+
+  function makeComputerMove(index: number) {
+    if (calculateWinner(squares) || !selectedSign || status === "It's a draw") {
+      return
+    }
+    while (squares[index]) {
+      index = Math.floor(Math.random() * 9)
+    }
+
+    const nextSquares = squares.slice();
+      if (selectedSign === 'X') {
+        nextSquares[index] = "O";
+      } else {
+        nextSquares[index] = "X";
+      }
+    
+
+    onChangeTurn();
     onPlay(nextSquares);
   }
 
@@ -121,6 +168,7 @@ function Board({ xIsNext, squares, onPlay, selectedSign }: BoardProps) {
           value={squares[index]}
           isWinner={winner && winner[0].includes(index as never)} // xd
           onSquareClick={() => handleClick(index)}
+          disabled={turn === false}
         />
       );
     }
@@ -143,13 +191,15 @@ interface SquareProps {
   value: String;
   onSquareClick: () => void;
   isWinner: boolean | null;
+  disabled: boolean;
 }
 
-function Square({ value, onSquareClick, isWinner }: SquareProps) {
+function Square({ value, onSquareClick, isWinner, disabled }: SquareProps) {
   return (
     <button
       className={isWinner ? "winner square" : "square"}
       onClick={onSquareClick}
+      disabled={disabled}
     >
       {value}
     </button>
