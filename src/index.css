@@ -57,6 +57,10 @@ button:disabled, button[disabled] {
   opacity: 1;
 }
 
+.selected {
+  border: #535bf2 2px solid;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
