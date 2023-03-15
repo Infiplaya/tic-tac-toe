@@ -74,6 +74,9 @@ button:disabled, button[disabled] {
   }
 }
 
+.sort-button {
+  margin-top: 10px;
+}
 
 .select-sign {
   display: flex;

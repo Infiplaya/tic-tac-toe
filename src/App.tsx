@@ -21,14 +21,12 @@ export default function Game() {
     setCurrentMove(nextHistory.length - 1)
   }
 
-  function jumpTo(nextMove: number) {
+  function goToMove(nextMove: number) {
     if (nextMove === 0) {
       handleStartGame()
     }
     setCurrentMove(nextMove)
     const nextSign = nextMove % 2 === 0 ? "X" : "O"
-    console.log("NextSign", nextSign)
-    console.log("SelectedSign", selectedSign)
     if (selectedSign === nextSign) {
       setIsPlayerTurn(true)
     } else {
@@ -38,7 +36,7 @@ export default function Game() {
 
   function handleStartGame() {
     if (!selectedSign || gameMode === "menu") {
-      setError("You must select game mode and selected sign")
+      setError("Please Select BOTH sign and game mode")
       return
     }
     if (selectedSign === "X") {
@@ -53,12 +51,14 @@ export default function Game() {
     setIsPlayerTurn(!isPlayerTurn)
   }
 
-  function getMoveLocation(prevSquares: string[], currSquares: string[]): number[] | undefined {
+  function getMoveLocation(
+    prevSquares: string[],
+    currSquares: string[]
+  ): number[] | undefined {
     for (let i = 0; i < currSquares.length; i++) {
       if (prevSquares[i] !== currSquares[i]) {
         const col = i % 3
         const row = Math.floor(i / 3)
-        console.log([col, row])
         return [col, row]
       }
     }
@@ -80,7 +80,7 @@ export default function Game() {
       <li key={move}>You are at move #{currentMove}</li>
     ) : (
       <li key={move}>
-        <button onClick={() => jumpTo(move)}>{description}</button>
+        <button onClick={() => goToMove(move)}>{description}</button>
       </li>
     )
   })
@@ -88,9 +88,9 @@ export default function Game() {
   moves.sort((a, b) => {
     if (a.key && b.key) {
       if (sortOrder === "asc") {
-        return (a.key as any) - (b.key as any);
+        return (a.key as any) - (b.key as any)
       } else {
-        return (a.key as any) - (b.key as any);
+        return (a.key as any) - (b.key as any)
       }
     } else {
       // Handle the case where a.key or b.key is null
@@ -146,14 +146,17 @@ export default function Game() {
                 gameMode={gameMode}
               />
             </div>
-            <div className="game-info">{moves}</div>
-            <button
-              onClick={() => {
-                setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-              }}
-            >
-              Sort {sortOrder === "asc" ? "Ascending" : "Descending"}
-            </button>
+            <div className="game-info">
+              {moves}
+              <button
+                className="sort-button"
+                onClick={() => {
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }}
+              >
+                Sort {sortOrder === "asc" ? "Ascending" : "Descending"}
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -212,7 +215,6 @@ function Board({
     if (isPlayerTurn === false && gameMode === "computer") {
       setTimeout(() => {
         makeComputerMove(Math.floor(Math.random() * 9))
-        console.log(isPlayerTurn)
       }, 500)
     }
   })
@@ -236,10 +238,11 @@ function Board({
   }
 
   let board = []
-  for (let row = 0; row < 3; row++) {
+  let boardSize = 3;
+  for (let row = 0; row < boardSize; row++) {
     let boardRow = []
-    for (let col = 0; col < 3; col++) {
-      let index = row * 3 + col
+    for (let col = 0; col < boardSize; col++) {
+      let index = row * boardSize + col
       boardRow.push(
         <Square
           key={index}
