@@ -53,11 +53,12 @@ export default function Game() {
     setIsPlayerTurn(!isPlayerTurn)
   }
 
-  function getMoveLocation(prevSquares: string[], currSquares: string[]) {
+  function getMoveLocation(prevSquares: string[], currSquares: string[]): number[] | undefined {
     for (let i = 0; i < currSquares.length; i++) {
       if (prevSquares[i] !== currSquares[i]) {
         const col = i % 3
         const row = Math.floor(i / 3)
+        console.log([col, row])
         return [col, row]
       }
     }
@@ -67,8 +68,11 @@ export default function Game() {
     let description
     if (move > 0) {
       const lastSquares = history[move - 1]
-      const [lastCol, lastRow] = getMoveLocation(lastSquares, squares)
-      description = `#${move} (${lastCol}, ${lastRow})`
+      const boardArr = getMoveLocation(lastSquares, squares)
+      if (boardArr) {
+        let [lastCol, lastRow] = boardArr
+        description = `#${move} (${lastCol}, ${lastRow})`
+      }
     } else {
       description = "Go to start"
     }
@@ -82,13 +86,17 @@ export default function Game() {
   })
 
   moves.sort((a, b) => {
-    if (sortOrder === "asc") {
-      return a.key - b.key
+    if (a.key && b.key) {
+      if (sortOrder === "asc") {
+        return (a.key as any) - (b.key as any);
+      } else {
+        return (a.key as any) - (b.key as any);
+      }
     } else {
-      return b.key - a.key
+      // Handle the case where a.key or b.key is null
+      return 0
     }
   })
-
   return (
     <div>
       <div className="game">
