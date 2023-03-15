@@ -1,37 +1,59 @@
 import { useEffect, useState } from "react"
 
 export default function Game() {
-  const [history, setHistory] = useState<Array<Array<String>>>([Array(9).fill(null)])
+  const [history, setHistory] = useState<Array<Array<string>>>([Array(9).fill("")])
   const [gameMode, setGameMode] = useState<"computer" | "player-player" | "menu">(
     "menu"
   )
   const [currentMove, setCurrentMove] = useState(0)
-  const [isAsc, setIsAsc] = useState(true)
+  const [sortOrder, setSortOrder] = useState("asc")
   const [selectedSign, setSelectedSign] = useState("")
-  const [newMoves, setNewMoves] = useState<JSX.Element[]>()
   const [isGameStarted, setIsGameStarted] = useState(false)
-  const [playerTurn, setPlayerTurn] = useState<Boolean | undefined>(undefined)
-  const [error, setError] = useState('')
+  const [isPlayerTurn, setIsPlayerTurn] = useState<Boolean | undefined>(undefined)
+  const [error, setError] = useState("")
 
   const xIsNext = currentMove % 2 === 0
   const currentSquares = history[currentMove]
 
-  function handlePlay(nextSquares: String[]) {
+  function handlePlay(nextSquares: string[]) {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares]
     setHistory(nextHistory)
     setCurrentMove(nextHistory.length - 1)
   }
 
   function jumpTo(nextMove: number) {
+    if (nextMove === 0) {
+      handleStartGame()
+    }
     setCurrentMove(nextMove)
+    const nextSign = nextMove % 2 === 0 ? "X" : "O"
+    console.log("NextSign", nextSign)
+    console.log("SelectedSign", selectedSign)
+    if (selectedSign === nextSign) {
+      setIsPlayerTurn(true)
+    } else {
+      setIsPlayerTurn(false)
+    }
   }
 
-  function handleSort() {
-    setNewMoves([...moves].reverse())
-    setIsAsc(!isAsc)
+  function handleStartGame() {
+    if (!selectedSign || gameMode === "menu") {
+      setError("You must select game mode and selected sign")
+      return
+    }
+    if (selectedSign === "X") {
+      setIsPlayerTurn(true)
+    } else {
+      setIsPlayerTurn(false)
+    }
+    setIsGameStarted(true)
   }
 
-  function getMoveLocation(prevSquares: String[], currSquares: String[]) {
+  function handleChangeTurn() {
+    setIsPlayerTurn(!isPlayerTurn)
+  }
+
+  function getMoveLocation(prevSquares: string[], currSquares: string[]) {
     for (let i = 0; i < currSquares.length; i++) {
       if (prevSquares[i] !== currSquares[i]) {
         const col = i % 3
@@ -39,23 +61,6 @@ export default function Game() {
         return [col, row]
       }
     }
-  }
-
-  function handleStartGame() {
-    if (!selectedSign || gameMode === "menu") {
-      setError('You must select game mode and selected sign')
-      return
-    }
-    if (selectedSign === "X") {
-      setPlayerTurn(true)
-    } else {
-      setPlayerTurn(false)
-    }
-    setIsGameStarted(true)
-  }
-
-  function handleChangeTurn() {
-    setPlayerTurn(!playerTurn)
   }
 
   let moves = history.map((squares, move) => {
@@ -74,6 +79,14 @@ export default function Game() {
         <button onClick={() => jumpTo(move)}>{description}</button>
       </li>
     )
+  })
+
+  moves.sort((a, b) => {
+    if (sortOrder === "asc") {
+      return a.key - b.key
+    } else {
+      return b.key - a.key
+    }
   })
 
   return (
@@ -120,15 +133,19 @@ export default function Game() {
                 squares={currentSquares}
                 onPlay={handlePlay}
                 selectedSign={selectedSign}
-                turn={playerTurn}
+                isPlayerTurn={isPlayerTurn}
                 onChangeTurn={handleChangeTurn}
                 gameMode={gameMode}
               />
             </div>
-            <div className="game-info">
-              <ul>{isAsc ? moves : newMoves}</ul>
-              <button onClick={handleSort}>Sort</button>
-            </div>
+            <div className="game-info">{moves}</div>
+            <button
+              onClick={() => {
+                setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+              }}
+            >
+              Sort {sortOrder === "asc" ? "Ascending" : "Descending"}
+            </button>
           </>
         )}
       </div>
@@ -138,12 +155,12 @@ export default function Game() {
 
 interface BoardProps {
   xIsNext: boolean
-  squares: String[]
-  onPlay: (nextSquares: String[]) => void
+  squares: string[]
+  onPlay: (nextSquares: string[]) => void
   selectedSign: string
-  turn: Boolean | undefined
+  isPlayerTurn: Boolean | undefined
   onChangeTurn: () => void
-  gameMode: "computer" | "player-player" | "menu";
+  gameMode: "computer" | "player-player" | "menu"
 }
 
 function Board({
@@ -151,17 +168,18 @@ function Board({
   squares,
   onPlay,
   selectedSign,
-  turn,
+  isPlayerTurn,
   onChangeTurn,
-  gameMode
+  gameMode,
 }: BoardProps) {
   const winner = calculateWinner(squares)
   let status: string
+  const isComputerTurn = isPlayerTurn === false && gameMode === "computer"
 
   if (winner) {
     status = "Winner: " + winner[1]
   } else {
-    if (!squares.includes(null)) {
+    if (!squares.includes("")) {
       status = "It's a draw"
     } else {
       status = "Next player: " + (xIsNext ? "X" : "O")
@@ -170,23 +188,26 @@ function Board({
 
   function handleClick(index: number) {
     if (calculateWinner(squares) || squares[index]) {
-      return;
+      return
     }
-    const nextSquares = squares.slice();
+    const nextSquares = squares.slice()
     if (xIsNext) {
-      nextSquares[index] = 'X';
+      nextSquares[index] = "X"
     } else {
-      nextSquares[index] = 'O';
+      nextSquares[index] = "O"
     }
-    onPlay(nextSquares);
-    onChangeTurn();
+    onPlay(nextSquares)
+    onChangeTurn()
   }
 
   useEffect(() => {
-    if (turn === false && gameMode === 'computer') {
-      makeComputerMove(Math.floor(Math.random() * 9))
+    if (isPlayerTurn === false && gameMode === "computer") {
+      setTimeout(() => {
+        makeComputerMove(Math.floor(Math.random() * 9))
+        console.log(isPlayerTurn)
+      }, 500)
     }
-  }, [turn, gameMode])
+  })
 
   function makeComputerMove(index: number) {
     if (calculateWinner(squares) || !selectedSign || status === "It's a draw") {
@@ -202,7 +223,6 @@ function Board({
     } else {
       nextSquares[index] = "X"
     }
-
     onPlay(nextSquares)
     onChangeTurn()
   }
@@ -218,6 +238,7 @@ function Board({
           value={squares[index]}
           isWinner={winner && winner[0].includes(index as never)} // xd
           onSquareClick={() => handleClick(index)}
+          disabled={isComputerTurn}
         />
       )
     }
@@ -237,23 +258,25 @@ function Board({
 }
 
 interface SquareProps {
-  value: String
+  value: string
   onSquareClick: () => void
   isWinner: boolean | null
+  disabled: boolean
 }
 
-function Square({ value, onSquareClick, isWinner }: SquareProps) {
+function Square({ value, onSquareClick, isWinner, disabled }: SquareProps) {
   return (
     <button
       className={isWinner ? "winner square" : "square"}
       onClick={onSquareClick}
+      disabled={disabled}
     >
       {value}
     </button>
   )
 }
 
-function calculateWinner(squares: String[]) {
+function calculateWinner(squares: string[]) {
   let winArr = []
   const lines = [
     [0, 1, 2],
