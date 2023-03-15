@@ -238,7 +238,7 @@ function Board({
   }
 
   let board = []
-  let boardSize = 3;
+  let boardSize = 3
   for (let row = 0; row < boardSize; row++) {
     let boardRow = []
     for (let col = 0; col < boardSize; col++) {
